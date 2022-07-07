@@ -11,3 +11,12 @@ sudo mv samples /usr/local/lib/pythonX.X/dist-packages/
 ```
 **Do not name other folders "samples".** This can cause conflicts with finding the locations of files when importing.
 
+Importing
+---------
+When importing samplebase or rgb, add samples. for this file structure.
+Ex:
+```
+from samples.samplebase import SampleBase
+from samples.rgb import *
+```
+
