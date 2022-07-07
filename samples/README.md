@@ -9,5 +9,5 @@ Usually, the location below exists in the syspath, so run the following command 
 ```
 sudo mv samples /usr/local/lib/pythonX.X/dist-packages/
 ```
-**Do not name other folders "samples"** This can cause conflicts with finding the locations of files when importing.
+**Do not name other folders "samples".** This can cause conflicts with finding the locations of files when importing.
 
