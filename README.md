@@ -3,8 +3,7 @@ Setup
 <p>Download this repository as a zip and extract it onto your computer</p>
 <p>Login to the led panel with winscp. </p>
 <p>Clear out any existing extraneous folders in the home/pi directory, which other children have made in their classes.</p>
-<p>    do not remove the led-matrix directory</p>
-<p>Any which cannot be removed can be removed later.</p>
+<p>Any which cannot be removed can be removed later. (do not remove the led-matrix directory )</p>
 <p>Create a directory here called "projects".</p>
 <p>From the repository, drop in examples and ledpanel. </p>
 <p>Run the command "sudo mv ledpanel /usr/local/lib/python3.5/dist-packages"</p>
