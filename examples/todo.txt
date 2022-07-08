@@ -1,0 +1,32 @@
+game stuff
+
+snake
+brick breaker
+asteroids
+maze man
+minesweeper
+
+math stuff
+
+3d cube
+3d shapes
+reflection
+oscilloscope
+
+graphics stuff
+
+draw line
+draw triangle
+draw polygon
+draw circle
+shader functions - parallelized
+better grapher
+voronoi
+boids
+2d raytraced lighting
+fluids
+
+basic python stuff
+
+case statements
+classes
