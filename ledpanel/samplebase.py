@@ -1,16 +1,18 @@
 from io import StringIO
-from rgbmatrix import graphics,RGBMatrix, RGBMatrixOptions
-import argparse
-import time
 import sys
+import time
+import argparse
 import os
+import numpy as np
+import PIL.Image
+#sys.path.append(os.path.abspath(os.path.dirname(__file__) + '/..'))
+from .rgbmatrix import RGBMatrix, RGBMatrixOptions ,graphics
 
-sys.path.append(os.path.abspath(os.path.dirname(__file__) + '/..'))
-from rgbmatrix import RGBMatrix, RGBMatrixOptions
+
 middle="middle"
 bottom="bottom"
 top="top"
-class SampleBase(object):
+class Panel(object):
     def __init__(self, *args, **kwargs):
         self.parser = argparse.ArgumentParser()
 
@@ -43,18 +45,18 @@ class SampleBase(object):
         options = RGBMatrixOptions()
 
         if self.args.led_gpio_mapping != None:
-          options.hardware_mapping = self.args.led_gpio_mapping
-        options.rows = self.args.led_rows
-        options.cols = self.args.led_cols
-        options.chain_length = self.args.led_chain
-        options.parallel = self.args.led_parallel
-        options.row_address_type = self.args.led_row_addr_type
-        options.multiplexing = self.args.led_multiplexing
-        options.pwm_bits = self.args.led_pwm_bits
-        options.brightness = self.args.led_brightness
-        options.pwm_lsb_nanoseconds = self.args.led_pwm_lsb_nanoseconds
-        options.led_rgb_sequence = self.args.led_rgb_sequence
-        options.pixel_mapper_config = self.args.led_pixel_mapper
+            options.hardware_mapping = self.args.led_gpio_mapping
+            options.rows = self.args.led_rows
+            options.cols = self.args.led_cols
+            options.chain_length = self.args.led_chain
+            options.parallel = self.args.led_parallel
+            options.row_address_type = self.args.led_row_addr_type
+            options.multiplexing = self.args.led_multiplexing
+            options.pwm_bits = self.args.led_pwm_bits
+            options.brightness = self.args.led_brightness
+            options.pwm_lsb_nanoseconds = self.args.led_pwm_lsb_nanoseconds
+            options.led_rgb_sequence = self.args.led_rgb_sequence
+            options.pixel_mapper_config = self.args.led_pixel_mapper
         if self.args.led_show_refresh:
           options.show_refresh_rate = 1
 
@@ -78,8 +80,23 @@ class SampleBase(object):
 #options.hardware_mapping = 'adafruit-hat'
 canvas = RGBMatrix()
 
-def clearPanel():
+def ClearPanel():
     canvas.Fill(0,0,0) 
+
+def SetPixel(row,col,r,g,b):
+    canvas.SetPixel(row,col,r,g,b)
+
+
+def DrawArray(row_offset,col_offset,pixels):
+    '''
+    Pass a numpy array of uint8 as an RGB image to draw it on the panel efficiently
+    the panel is 32x32 so it would expect the array to be of size 96x96 
+    '''
+    img = PIL.Image.fromarray(pixels.astype('uint8'), 'RGB')
+    canvas.SetImage(img, row_offset, col_offset)
+
+def DrawImage(row_offset,col_offset,image):
+    canvas.SetImage( image, row_offset, col_offset)
 
 green = tuple((0,255,0))
 red = tuple((255,0,0))
@@ -93,17 +110,17 @@ indigo = tuple((75,0,130))
 violet = tuple((238,130,238))
 pink = tuple((255,20,147))
 
-def lightUpRow(rowNumber, color):
+def LightUpRow(rowNumber, color):
     r, g, b = color
     for x in range (0,32):
         canvas.SetPixel(x, rowNumber, r, g, b)
 
-def lightUpColumn(columnNumber, color):
+def LightUpColumn(columnNumber, color):
     r, g, b = color
     for x in range (0,32):
         canvas.SetPixel(columnNumber, x, r, g, b)
 
-def printPanelRGB (text, redValue=255, greenValue=0, blueValue=0, position="middle"):
+def PrintPanelRGB (text, redValue=255, greenValue=0, blueValue=0, position="middle"):
         if position=="top":
                  loc=8
         if position=="middle":
@@ -121,27 +138,7 @@ def printPanelRGB (text, redValue=255, greenValue=0, blueValue=0, position="midd
         color = graphics.Color(redValue,greenValue,blueValue)
         len = graphics.DrawText(canvas, font,0, loc, color, text)
 
-def printPanel (text, textColor=(255,0,0), position="middle"):
-        if position=="top":
-                 loc=8
-        if position=="middle":
-                 loc=19
-        if position=="bottom":
-                 loc=30
-        r,g,b = textColor
-        color = graphics.Color(r,g,b)
-        font = graphics.Font()
-        font.LoadFont("/home/pi/rpi-rgb-led-matrix/fonts/6x10.bdf")
-        old = sys.stdout
-        io = StringIO()
-        sys.stdout = io
-        print(text)
-        sys.stdout = old
-        text = io.getvalue().rstrip()
-        #textColor = graphics.Color(255,0,0)
-        len = graphics.DrawText(canvas, font, 0, loc, color, text)
-
-def scrollPanelRGB(text, redValue, greenValue, blueValue, timesPassed=5,position="middle"):
+def ScrollPanelRGB(text, redValue, greenValue, blueValue, timesPassed=5,position="middle"):
         font = graphics.Font()
         font.LoadFont("/home/pi/rpi-rgb-led-matrix/fonts/6x10.bdf")
         old = sys.stdout
@@ -153,100 +150,36 @@ def scrollPanelRGB(text, redValue, greenValue, blueValue, timesPassed=5,position
         color = graphics.Color(redValue, greenValue, blueValue)
         pos = 0
         x = 0
+        loc = 0
+        clearfunc = ClearTop()
         if position=="top":
-                loc=8
-                while (x<timesPassed):
-                        clearTop()
-                        len = graphics.DrawText(canvas, font, pos, loc, color, test)
-                        pos -= 1
-                        if (pos + len < 0):
-                                pos = 32
-                                x += 1
+            loc=8
+        elif position=="middle":
+            loc=19
+            clearfunc=ClearMiddle()
+        elif position=="bottom":
+            loc=30
+            clearfunc = ClearBottom()
+        while (x<timesPassed):
+            clearfunc()
+            len = graphics.DrawText(canvas, font, pos, loc, color, test)
+            pos -= 1
+            if (pos + len < 0):
+                pos = 32
+                x += 1
+            time.sleep(0.05)
 
-                        time.sleep(0.05)
-        if position=="middle":
-                loc=19
-                while (x<timesPassed):
-                        clearMiddle()
-                        len = graphics.DrawText(canvas, font, pos, loc, color, test)
-                        pos -= 1
-                        if (pos + len < 0):
-                                pos = 32
-                                x += 1
-
-                        time.sleep(0.05) 
-        if position=="bottom":
-                loc=30
-                while (x<timesPassed):
-                        clearBottom()
-                        len = graphics.DrawText(canvas, font, pos, loc, color, test)
-                        pos -= 1
-                        if (pos + len < 0):
-                                pos = 32
-                                x += 1
-
-                        time.sleep(0.05)
-
-def scrollPanel(text, textColor=(255,0,0), timesPassed=5, position="middle"):
-        r, g, b = textColor
-        font = graphics.Font()
-        color = graphics.Color(r, g, b)
-        font.LoadFont("/home/pi/rpi-rgb-led-matrix/fonts/6x10.bdf")
-        old = sys.stdout
-        io = StringIO()
-        sys.stdout = io
-        print(text)
-        sys.stdout = old
-        test = io.getvalue().rstrip()
-        #textColor = graphics.Color(255,0,0)
-        pos = 0
-        x = 0
-        if position=="top":
-                loc=8
-                while (x<timesPassed):
-                        clearTop()
-                        len = graphics.DrawText(canvas, font, pos, loc, color, test)
-                        pos -= 1
-                        if (pos + len < 0):
-                                pos = 32
-                                x += 1
-
-                        time.sleep(0.05)
-        if position=="middle":
-                loc=19
-                while (x<timesPassed):
-                        clearMiddle()
-                        len = graphics.DrawText(canvas, font, pos, loc, color, test)
-                        pos -= 1
-                        if (pos + len < 0):
-                                pos = 32
-                                x += 1
-
-                        time.sleep(0.05)
-        if position=="bottom":
-                loc=30
-                while (x<timesPassed):
-                        clearBottom()
-                        len = graphics.DrawText(canvas, font, pos, loc, color, test)
-                        pos -= 1
-                        if (pos + len < 0):
-                                pos = 32
-                                x += 1
-
-                        time.sleep(0.05)        
-
-def clearTop():
+def ClearTop():
     for x in range (0,32):   
         for y in range (0,11):
             canvas.SetPixel(x, y, 0, 0, 0)
 
-def clearMiddle():
+def ClearMiddle():
     for x in range (0,32):   
         for y in range (11,22):
             canvas.SetPixel(x, y, 0, 0, 0)
 
-def clearBottom():
+def ClearBottom():
     for x in range (0,32):   
         for y in range (22,32):
             canvas.SetPixel(x, y, 0, 0, 0)
-

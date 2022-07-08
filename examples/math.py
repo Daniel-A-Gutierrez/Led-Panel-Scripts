@@ -1,4 +1,4 @@
-from samples.rgb import *
+from ledpanel.rgb import *
 import random
 score = 0
 questions = 5

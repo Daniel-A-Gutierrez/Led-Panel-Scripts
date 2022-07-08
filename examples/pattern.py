@@ -1,5 +1,5 @@
-from samples.rgb import *
-from samples.samplebase import SampleBase
+from ledpanel.rgb import *
+from ledpanel.samplebase import SampleBase
 for i in range(0, 32, 2):
         lightUpRow(i, green)
         time.sleep(0.2)
