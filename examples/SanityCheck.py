@@ -9,4 +9,4 @@ print("testing new functionality")
 for i in range(0,1024,2):
     ledpanel.SetPixel(i //32 , i%32 , i//5, 0, 255-1//5)
 
-ledpanel.clearPanel()
+ledpanel.ClearPanel()

@@ -1,18 +1,18 @@
 from io import StringIO
-import sys
-import time
+from rgbmatrix import graphics,RGBMatrix, RGBMatrixOptions
 import argparse
+import time
+import sys
 import os
-import numpy as np
-import PIL.Image
-#sys.path.append(os.path.abspath(os.path.dirname(__file__) + '/..'))
-from .rgbmatrix import RGBMatrix, RGBMatrixOptions ,graphics
 
-
+sys.path.append(os.path.abspath(os.path.dirname(__file__) + '/..'))
+from rgbmatrix import RGBMatrix, RGBMatrixOptions
 middle="middle"
 bottom="bottom"
 top="top"
-class Panel(object):
+
+
+class SampleBase(object):
     def __init__(self, *args, **kwargs):
         self.parser = argparse.ArgumentParser()
 
@@ -26,7 +26,7 @@ class Panel(object):
         self.parser.add_argument("--led-scan-mode", action="store", help="Progressive or interlaced scan. 0 Progressive, 1 Interlaced (default)", default=1, choices=range(2), type=int)
         self.parser.add_argument("--led-pwm-lsb-nanoseconds", action="store", help="Base time-unit for the on-time in the lowest significant bit in nanoseconds. Default: 130", default=130, type=int)
         self.parser.add_argument("--led-show-refresh", action="store_true", help="Shows the current refresh rate of the LED panel")
-        self.parser.add_argument("--led-slowdown-gpio", action="store", help="Slow down writing to GPIO. Range: 1..100. Default: 1", choices=range(3), type=int)
+        self.parser.add_argument("--led-slowdown-gpio", action="store", help="Slow down writing to GPIO. Range: 0..4. Default: 1", default=1, type=int)
         self.parser.add_argument("--led-no-hardware-pulse", action="store", help="Don't use hardware pin-pulse generation")
         self.parser.add_argument("--led-rgb-sequence", action="store", help="Switch if your matrix has led colors swapped. Default: RGB", default="RGB", type=str)
         self.parser.add_argument("--led-pixel-mapper", action="store", help="Apply pixel mappers. e.g \"Rotate:90\"", default="", type=str)
@@ -57,13 +57,13 @@ class Panel(object):
             options.pwm_lsb_nanoseconds = self.args.led_pwm_lsb_nanoseconds
             options.led_rgb_sequence = self.args.led_rgb_sequence
             options.pixel_mapper_config = self.args.led_pixel_mapper
-        if self.args.led_show_refresh:
-          options.show_refresh_rate = 1
 
+        if self.args.led_show_refresh:
+            options.show_refresh_rate = 1
         if self.args.led_slowdown_gpio != None:
             options.gpio_slowdown = self.args.led_slowdown_gpio
         if self.args.led_no_hardware_pulse:
-          options.disable_hardware_pulsing = True
+            options.disable_hardware_pulsing = True
 
         self.matrix = RGBMatrix(options = options)
 
@@ -76,29 +76,9 @@ class Panel(object):
             sys.exit(0)
 
         return True
-#options = RGBMatrixOptions()
-#options.hardware_mapping = 'adafruit-hat'
+
+
 canvas = RGBMatrix()
-
-def ClearPanel():
-    canvas.Fill(0,0,0) 
-
-def SetPixel(row,col,r,g,b):
-    canvas.SetPixel(row,col,r,g,b)
-
-def Fill(r,g,b):
-    canvas.Fill(r,g,b)
-
-def DrawArray(row_offset,col_offset,pixels):
-    '''
-    Pass a numpy array of uint8 as an RGB image to draw it on the panel efficiently
-    the panel is 32x32 so it would expect the array to be of size 96x96 
-    '''
-    img = PIL.Image.fromarray(pixels.astype('uint8'), 'RGB')
-    canvas.SetImage(img, row_offset, col_offset)
-
-def DrawImage(row_offset,col_offset,image):
-    canvas.SetImage( image, row_offset, col_offset)
 
 green = tuple((0,255,0))
 red = tuple((255,0,0))
@@ -111,6 +91,30 @@ lime = tuple((128,255,0))
 indigo = tuple((75,0,130))
 violet = tuple((238,130,238))
 pink = tuple((255,20,147))
+
+def ClearPanel():
+    canvas.Fill(0,0,0) 
+
+def Fill(r,g,b):
+    canvas.Fill(r,g,b)
+
+#expects a 31x31 buffer of 3 tuples of ints
+def DrawBufferColors( buffer ):
+	for i in range(32):
+		for j in range(32):
+			color = buffer[i*32 + j]
+			canvas.SetPixel(i,j,color[0], color[1], color[2])
+
+def DrawBuffer(buffer):
+	for i in range(32):
+		for j in range(32):
+			r = buffer[i*32 + j] & 0x00ff0000
+			g = buffer[i*32 + j] & 0x0000ff00
+			b = buffer[i*32 + j] & 0x000000ff
+			canvas.SetPixel(i,j,r,g,b)
+
+def SetPixel(col, row, r, g, b):
+	canvas.SetPixel(col,row,r,g,b)
 
 def LightUpRow(rowNumber, color):
     r, g, b = color
@@ -153,15 +157,15 @@ def ScrollPanelRGB(text, redValue, greenValue, blueValue, timesPassed=5,position
         pos = 0
         x = 0
         loc = 0
-        clearfunc = ClearTop
+        clearfunc = ClearTop()
         if position=="top":
             loc=8
         elif position=="middle":
             loc=19
-            clearfunc=ClearMiddle
+            clearfunc=ClearMiddle()
         elif position=="bottom":
             loc=30
-            clearfunc = ClearBottom
+            clearfunc = ClearBottom()
         while (x<timesPassed):
             clearfunc()
             len = graphics.DrawText(canvas, font, pos, loc, color, test)
