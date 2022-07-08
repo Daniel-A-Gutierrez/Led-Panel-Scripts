@@ -12,9 +12,12 @@ def example_function_name( example_input_data):
     #then the function will return
     return example_input_data + example_input_data
 
+
 example_function_parameter = input("Do an input : ")
+
 #we run the function and store the output
 example_function_output = example_function_name(example_function_parameter)
+
 #then we print the output
 ledpanel.PrintPanelRGB(example_function_output)
 
