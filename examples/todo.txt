@@ -25,6 +25,7 @@ voronoi
 boids
 2d raytraced lighting
 fluids
+!3d renderer requires testing
 
 basic python stuff
 
