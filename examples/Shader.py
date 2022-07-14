@@ -1,8 +1,9 @@
-#shaders are also called 'gpu programs'. Theyre how your computer draws
-#pretty much all the graphics you see, from text to minecraft. 
+#shaders are also called 'gpu programs'. Gpu stands for graphics processing unit. 
+#Theyre how your computer draws pretty much all the graphics you see,
+#from text to minecraft. 
 
 #the basic idea of a shader is some function that takes in information,
-#doesnt change any state, and returns a color. Lets mimic that.
+#doesnt change any global state, and returns a color.
 
 import time
 #import ledpanel
@@ -72,7 +73,7 @@ def Rainbow(row,col):
 def fsign ( p1,  p2,  p3):
     return (p1[0] - p3[0]) * (p2[1] - p3[1]) - (p2[0] - p3[0]) * (p1[1] - p3[1])
 
-#if you want to learn more about this part look up barycentric coordinates
+#if you want to learn more about this : https://www.youtube.com/watch?v=HYAgJN3x4GA
 def getWeights( pt , v1, v2 , v3):
     d1 = fsign(pt, v1, v2)
     d2 = fsign(pt, v2, v3)
